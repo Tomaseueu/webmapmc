@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "browsergui",
+  "version": "${version}",
+  "name": "Browser GUI",
+  "description": "Embeds a Chromium browser inside a Minecraft GUI screen, toggled with the J key.",
+  "authors": [
+    "TomasEU"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "eu.tomaseu.browsergui.client.BrowserGuiClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.6",
+    "minecraft": ">=26.1.1",
+    "java": ">=25",
+    "fabric-api": "*",
+    "mcef": ">=2.2.0"
+  }
+}
