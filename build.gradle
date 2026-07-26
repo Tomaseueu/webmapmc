@@ -1,0 +1,104 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+
+    // MCEF (Keksuccino's fork) - confirmed directly from the project's
+    // own README (github.com/Keksuccino/mcef, 26.1.1 branch): it is
+    // distributed via a static maven mirror at
+    // https://keksuccino.github.io/maven/, NOT Modrinth.
+    maven {
+        name = "Keksuccino"
+        url = "https://keksuccino.github.io/maven/"
+    }
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "browsergui" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+dependencies {
+    // To change the versions see the gradle.properties file.
+    // Minecraft 26.1 is unobfuscated, so there is no "mappings"
+    // dependency here at all.
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    // Plain "implementation", not "modImplementation" - Loom no longer
+    // remaps anything for 26.1+, since Minecraft itself ships
+    // unobfuscated.
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // MCEF (Keksuccino's fork), group "de.keksuccino", artifact
+    // "mcef-fabric", version format "<mod_version>-<minecraft_version>".
+    //
+    // NOTE: the upstream README's example uses "modImplementation", but
+    // that configuration does not exist in this project - confirmed by
+    // a real build failure: "Could not find method modImplementation()".
+    // Loom does not remap Minecraft or mods for 26.1+, so it never
+    // registers the "mod*" configurations. Plain "implementation" is
+    // correct here.
+    implementation "de.keksuccino:mcef-fabric:${project.mcef_version}"
+}
+
+processResources {
+    def version = project.version
+    inputs.property "version", version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+}
+
+java {
+    // Loom will automatically attach sourcesJar to the "build" task if
+    // it is present. There is no remapping step for 26.1+, so this is
+    // a plain sources jar, not a RemapSourcesJar.
+    withSourcesJar()
+
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+    def projectName = project.name
+    inputs.property "projectName", projectName
+
+    from("LICENSE") {
+        rename { "${it}_${projectName}" }
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId project.archives_base_name
+            from components.java
+        }
+    }
+
+    repositories {
+        // Add repositories to publish to here.
+    }
+}
